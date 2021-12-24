@@ -136,6 +136,8 @@ func gitCommand(showOutput bool, args ...string) {
 		panic(fmt.Sprintf("Command 'git %s' failed with: \nError: %s", strings.Join(args, " "), err))
 	} else {
 		output := xurls.Relaxed().FindAllString(string(c), 1)
+		fmt.Printf(string(c))
+		fmt.Println(output)
 		if len(output) > 0 && showOutput{
 			fmt.Printf("Here is the url for merge: %s", output[0])
 		}
