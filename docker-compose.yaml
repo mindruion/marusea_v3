@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+    expose:
+      - 5437
+    ports:
+      - "5437:5437"
+    command:
+      - "postgres"
+      - "-c"
+      - "port=5437"
+volumes:
+  data:
