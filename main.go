@@ -121,7 +121,7 @@ func main() {
 	gitCommand(false,"add", ".")
 	gitCommand(false,"commit", "-m", fmt.Sprintf("%s: %s #%s", action.Value, description, taskNumber))
 	gitCommand(true,"push", "origin", "HEAD")
-	cleaCommand()
+	//cleaCommand()
 
 	if createNewBranch.Value == "yes" {
 		fmt.Printf("Changes was pushed successfully to '%s'\n", branchName)
@@ -132,7 +132,7 @@ func main() {
 
 func gitCommand(showOutput bool, args ...string) {
 	if c, err := exec.Command("git", args...).CombinedOutput(); err != nil {
-		cleaCommand()
+		//cleaCommand()
 		panic(fmt.Sprintf("Command 'git %s' failed with: \nError: %s", strings.Join(args, " "), err))
 	} else {
 		output := xurls.Relaxed().FindAllString(string(c), 1)
