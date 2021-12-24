@@ -125,7 +125,7 @@ func main() {
 
 	if createNewBranch.Value == "yes" {
 		fmt.Printf("Changes was pushed successfully to '%s'\n", branchName)
-		fmt.Printf("Here is the url for merge: %s", url)
+		fmt.Printf("Here is the url for merge: %s\n", url)
 	} else {
 		fmt.Printf("Changes was pushed successfully\n")
 	}
