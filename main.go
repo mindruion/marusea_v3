@@ -123,9 +123,9 @@ func main() {
 	cleaCommand()
 
 	if createNewBranch.Value == "yes" {
-		fmt.Printf("Changes was pushed successfully to '%s'", branchName)
+		fmt.Printf("Changes was pushed successfully to '%s'\n", branchName)
 	} else {
-		fmt.Printf("Changes was pushed successfully")
+		fmt.Printf("Changes was pushed successfully\n")
 	}
 }
 
