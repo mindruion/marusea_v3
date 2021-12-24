@@ -120,28 +120,28 @@ func main() {
 
 	gitCommand(false,"add", ".")
 	gitCommand(false,"commit", "-m", fmt.Sprintf("%s: %s #%s", action.Value, description, taskNumber))
-	gitCommand(true,"push", "origin", "HEAD")
-	//cleaCommand()
+	url := gitCommand(true,"push", "origin", "HEAD")
+	cleaCommand()
 
 	if createNewBranch.Value == "yes" {
 		fmt.Printf("Changes was pushed successfully to '%s'\n", branchName)
+		fmt.Printf("Here is the url for merge: %s", url)
 	} else {
 		fmt.Printf("Changes was pushed successfully\n")
 	}
 }
 
-func gitCommand(showOutput bool, args ...string) {
+func gitCommand(showOutput bool, args ...string) string{
 	if c, err := exec.Command("git", args...).CombinedOutput(); err != nil {
-		//cleaCommand()
+		cleaCommand()
 		panic(fmt.Sprintf("Command 'git %s' failed with: \nError: %s", strings.Join(args, " "), err))
 	} else {
 		output := xurls.Relaxed().FindAllString(string(c), 1)
-		fmt.Printf(string(c))
-		fmt.Println(output)
 		if len(output) > 0 && showOutput{
-			fmt.Printf("Here is the url for merge: %s", output[0])
+			return output[0]
 		}
 	}
+	return ""
 }
 
 func cleaCommand() {
