@@ -174,7 +174,7 @@ func main() {
 		Size:      10,
 		Searcher:  searcher,
 	}
-	_, action, err := _select.Run()
+	i, _, err := _select.Run()
 	description, err := _prompt.Run()
 	taskNumber, err := _prompt2.Run()
 	_, createNewBranch, err := _prompt3.Run()
@@ -183,11 +183,9 @@ func main() {
 		fmt.Printf("Prompt failed %v\n", err)
 		return
 	}
-
-	fmt.Printf("You choose action %s\n", action)
-	fmt.Printf("You choose description %s\n", description)
-	fmt.Printf("You choose task number %s\n", taskNumber)
-	fmt.Printf("You choose create new branch %s\n", createNewBranch)
+	description = strings.TrimSpace(description)
+	taskNumber = strings.TrimSpace(taskNumber)
+	action := options[i]
 
 	if createNewBranch == "Yes" {
 		res := strings.ReplaceAll(description, " ", "-")
