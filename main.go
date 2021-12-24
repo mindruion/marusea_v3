@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"mvdan.cc/xurls/v2"
 	"os"
 	"os/exec"
 	"runtime"
@@ -114,12 +115,12 @@ func main() {
 	if createNewBranch.Value == "yes" {
 		res := strings.ReplaceAll(description, " ", "-")
 		branchName = fmt.Sprintf("%s/%s-#%s", strings.ToLower(action.Name), res, taskNumber)
-		gitCommand("checkout", "-b", branchName)
+		gitCommand(false,"checkout", "-b", branchName)
 	}
 
-	gitCommand("add", ".")
-	gitCommand("commit", "-m", fmt.Sprintf("%s: %s #%s", action.Value, description, taskNumber))
-	gitCommand("push", "origin", "HEAD")
+	gitCommand(false,"add", ".")
+	gitCommand(false,"commit", "-m", fmt.Sprintf("%s: %s #%s", action.Value, description, taskNumber))
+	gitCommand(true,"push", "origin", "HEAD")
 	cleaCommand()
 
 	if createNewBranch.Value == "yes" {
@@ -129,14 +130,19 @@ func main() {
 	}
 }
 
-func gitCommand(args ...string) {
-	if _, err := exec.Command("git", args...).CombinedOutput(); err != nil {
+func gitCommand(showOutput bool, args ...string) {
+	if c, err := exec.Command("git", args...).CombinedOutput(); err != nil {
 		cleaCommand()
 		panic(fmt.Sprintf("Command 'git %s' failed with: \nError: %s", strings.Join(args, " "), err))
+	} else {
+		output := xurls.Relaxed().FindAllString(string(c), 1)
+		if len(output) > 0 && showOutput{
+			fmt.Printf("Here is the url for merge: %s", output[0])
+		}
 	}
 }
 
-func cleaCommand(){
+func cleaCommand() {
 	var clear map[string]func()     //create a map for storing clear funcs
 	clear = make(map[string]func()) //Initialize it
 	clear["linux"] = func() {
