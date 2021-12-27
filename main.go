@@ -1,91 +1,12 @@
-//package main
-//
-//import (
-//	"errors"
-//	"fmt"
-//	"github.com/manifoldco/promptui"
-//	"regexp"
-//	"strconv"
-//)
-//
-//func normalize(phoneNumber string) string {
-//	re := regexp.MustCompile("\\D")
-//	return re.ReplaceAllString(phoneNumber, "")
-//}
-//
-//func main() {
-//	items := []map[string]string{
-
-//	branchCreateItems := []string{"Yes", "No"}
-//
-//	var result1,result2,result3,result4 string
-//	var err error
-//
-//	validate := func(input string) error {
-//		_, err := strconv.ParseFloat(input, 64)
-//		if err != nil {
-//			return errors.New("invalid number")
-//		}
-//		return nil
-//	}
-//	templates := &promptui.SelectTemplates{
-//		Active:   "{{ . | blue }} ",
-//		Inactive: "{{ . | black }} ",
-//		Selected: "{{ . | green }} ",
-//	}
-//	promptTemplate := &promptui.PromptTemplates{
-//			Prompt:  "{{ . }} ",
-//			Valid:   "{{ . | green }} ",
-//			Invalid: "{{ . | red }} ",
-//			Success: "{{ . | bold }} ",
-//		}
-//
-//	_select := promptui.Select{
-//		Label:    "Write bellow description:",
-//		Items:    items,
-//		Templates: templates,
-//	}
-//
-//	_prompt := promptui.Prompt{
-//		Label:    "Write bellow description:",
-//		Templates: promptTemplate,
-//	}
-//
-//	_prompt2 := promptui.Prompt{
-//		Label:    "What is task number:",
-//		//Templates: prompt_templates,
-//		Validate: validate,
-//	}
-//
-//	_prompt3 := promptui.Select{
-//		Label:    "Should I create a new branch?",
-//		Items: branchCreateItems,
-//		Templates: templates,
-//	}
-//
-//	_, result1, err = _select.Run()
-//	result2, err = _prompt.Run()
-//	result3, err = _prompt2.Run()
-//	_, result4, err = _prompt3.Run()
-//
-//	if err != nil {
-//		fmt.Printf("Prompt failed %v\n", err)
-//		return
-//	}
-//
-//	fmt.Printf("You choose %s\n", result1)
-//	fmt.Printf("You choose %s\n", result2)
-//	fmt.Printf("You choose %s\n", result3)
-//	fmt.Printf("You choose %s\n", result4)
-//}
-
 package main
 
 import (
 	"errors"
 	"fmt"
-	"log"
+	"mvdan.cc/xurls/v2"
+	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -100,14 +21,17 @@ type commitOptions struct {
 func main() {
 	var err error
 	options := []commitOptions{
-		{Name: "Feat", Value: "feat"},
-		{Name: "Fix", Value: "fix"},
-		{Name: "Docs", Value: "docs"},
-		{Name: "Chore", Value: "chore"},
-		{Name: "Style", Value: "style"},
-		{Name: "Refactor", Value: "refactor"},
-		{Name: "Perf", Value: "perf"},
-		{Name: "Test", Value: "test"},
+		{Name: "Feat", Value: ":star: Feat"},
+		{Name: "Fix", Value: ":beetle: Fix"},
+		{Name: "Docs", Value: ":books: Docs"},
+		{Name: "Chore", Value: ":gear: Chore"},
+		{Name: "Style", Value: ":rocket: Style"},
+		{Name: "Refactor", Value: ":hammer: Refactor"},
+		{Name: "Perf", Value: ":zap: Perf"},
+		{Name: "Test", Value: ":test_tube: Test"},
+		{Name: "Config", Value: ":hammer_and_wrench: Config"},
+		{Name: "Renaming", Value: ":label: Renaming"},
+		{Name: "Revert", Value: ":hedgehog: Revert"},
 	}
 
 	branchCreateItems := []commitOptions{
@@ -158,13 +82,13 @@ func main() {
 	_prompt := promptui.Prompt{
 		Label:     "Write bellow description:",
 		Templates: promptTemplate,
-		Validate: validateLength,
+		Validate:  validateLength,
 	}
 
 	_prompt2 := promptui.Prompt{
-		Label: "What is task number:",
+		Label:     "What is task number:",
 		Templates: promptTemplate,
-		Validate: validate,
+		Validate:  validate,
 	}
 
 	_prompt3 := promptui.Select{
@@ -177,7 +101,7 @@ func main() {
 	i, _, err := _select.Run()
 	description, err := _prompt.Run()
 	taskNumber, err := _prompt2.Run()
-	_, createNewBranch, err := _prompt3.Run()
+	v, _, err := _prompt3.Run()
 
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
@@ -186,22 +110,59 @@ func main() {
 	description = strings.TrimSpace(description)
 	taskNumber = strings.TrimSpace(taskNumber)
 	action := options[i]
-
-	if createNewBranch == "Yes" {
+	createNewBranch := branchCreateItems[v]
+	branchName := ""
+	if createNewBranch.Value == "yes" {
 		res := strings.ReplaceAll(description, " ", "-")
-		branchName := fmt.Sprintf("%s/%s-#%s", action, res, taskNumber)
-		gitCommand("checkout", "-b", branchName)
+		branchName = fmt.Sprintf("%s/%s-#%s", strings.ToLower(action.Name), res, taskNumber)
+		gitCommand(false,"checkout", "-b", branchName)
 	}
 
-	gitCommand("add", ".")
-	gitCommand("commit", "-m", fmt.Sprintf("%s: %s # %s", action, description, taskNumber))
-	gitCommand("push", "origin", "HEAD")
+	gitCommand(false,"add", ".")
+	gitCommand(false,"commit", "-m", fmt.Sprintf("%s: %s #%s", action.Value, description, taskNumber))
+	url := gitCommand(true,"push", "origin", "HEAD")
+	cleaCommand()
+
+	if createNewBranch.Value == "yes" {
+		fmt.Printf("Changes was pushed successfully to '%s'\n", branchName)
+		fmt.Printf("Here is the url for merge: %s\n", url)
+	} else {
+		fmt.Printf("Changes was pushed successfully\n")
+	}
 }
 
-func gitCommand(args...string){
-	if c, err :=exec.Command("git", args...).CombinedOutput(); err != nil {
-		log.Fatal(err)
+func gitCommand(showOutput bool, args ...string) string{
+	if c, err := exec.Command("git", args...).CombinedOutput(); err != nil {
+		cleaCommand()
+		panic(fmt.Sprintf("Command 'git %s' failed with: \nError: %s", strings.Join(args, " "), err))
 	} else {
-		fmt.Printf("%s\n", c)
+		output := xurls.Relaxed().FindAllString(string(c), 1)
+		if len(output) > 0 && showOutput{
+			return output[0]
+		}
 	}
+	return ""
+}
+
+func cleaCommand() {
+	var clear map[string]func()     //create a map for storing clear funcs
+	clear = make(map[string]func()) //Initialize it
+	clear["linux"] = func() {
+		cmd := exec.Command("clear") //Linux example, its tested
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+	clear["windows"] = func() {
+		cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+
+	value, ok := clear[runtime.GOOS] //runtime.GOOS -> linux, windows, darwin etc.
+	if ok {                          //if we defined a clear func for that platform:
+		value() //we execute it
+	} else { //unsupported platform
+		panic("Your platform is unsupported! I can't clear terminal screen :(")
+	}
+
 }
